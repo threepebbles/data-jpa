@@ -240,11 +240,6 @@ class MemberRepositoryTest {
 
         //when
         // 20살 이상 -> 4명
-        // 벌크 연산 주의사항
-        // 벌크 연산(executeUpdate()) 실행 시에는 내부적으로 em.flush() 호출 후, 영속성 컨텍스트를 거치지 않고 DB로 바로 쿼리를 보낸다.
-        // 따라서 벌크 연산 후 영속성 컨텍스트에 남아있는 엔티티는 DB와 값이 다르다는 것을 인지하고 있어야 한다.
-        // 벌크 연산 후 em.clear()를 통해 캐시를 비워주는 것이 하나의 방법.
-        // Spring Data JPA의 @Modifying(clearAutomatically = true)를 사용하면 em.clear()와 같은 효과를 볼 수 있음.
         int resultCount = memberRepository.bulkAgePlus(20);
 
         List<Member> result = memberRepository.findByUsername("member5");
@@ -278,5 +273,34 @@ class MemberRepositoryTest {
 //        List<Member> members = memberRepository.findNamedEntityGraphByUsername("member1");
         List<Member> members = memberRepository.findEntityGraphByUsername("member1");
         //then
+    }
+
+    @Test
+    public void queryHint() {
+        //given
+        Member member1 = new Member("member1", 10);
+        memberRepository.save(member1);
+        em.flush();
+        em.clear();
+
+        //when
+        Member findMember = memberRepository.findReadOnlyByUsername("member1");
+        // readOnly이므로 변경해도 DB에 update 쿼리는 발생하지 않음.
+        findMember.changeUsername("member2");
+        System.out.println("findMember = " + findMember);   // 출력: findMember = member2
+
+        em.flush();
+    }
+
+    @Test
+    public void lock() {
+        //given
+        Member member1 = new Member("member1", 10);
+        memberRepository.save(member1);
+        em.flush();
+        em.clear();
+
+        //when
+        List<Member> result = memberRepository.findLockByUsername("member1");
     }
 }
