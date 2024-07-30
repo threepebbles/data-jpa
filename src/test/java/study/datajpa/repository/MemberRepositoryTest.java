@@ -10,6 +10,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.transaction.annotation.Transactional;
 import study.datajpa.entity.Member;
 
@@ -146,5 +151,74 @@ class MemberRepositoryTest {
             // org.hibernate.NonUniqueResultException -> org.springframework.dao.IncorrectResultSizeDataAccessException 발생
             Optional<Member> findOptional = memberRepository.findOptionalByUsername("AAA");
         }).isInstanceOf(IncorrectResultSizeDataAccessException.class);
+    }
+
+    @Test
+    public void paging() {
+        //given
+        int memberCount = 11;
+        for (int i = 1; i <= memberCount; i++) {
+            memberRepository.save(new Member("member" + i, 10));
+        }
+        int age = 10;
+        int pageNumber = 3;
+        int pageSize = 3;
+        // username기준 내림차순 정렬 결과를 페이징
+        // 한 페이지당 pageSize개 항목
+        // pageNumber번째 페이지 조회
+        PageRequest pageRequest = PageRequest.of(pageNumber, pageSize, Sort.by(Direction.DESC, "username"));
+
+        //when
+        Page<Member> page = memberRepository.findByAge(age, pageRequest);
+//        Page<MemberDto> toMap = page.map(member -> new MemberDto(member.getId(), member.getUsername(), null));
+
+        //then
+        List<Member> content = page.getContent();
+        assertThat(content.size()).isEqualTo(2);    // 조회된 데이터 수
+        assertThat(page.getTotalElements()).isEqualTo(11);  // 전체 데이터 수
+        assertThat(page.getNumber()).isEqualTo(3);  // 페이지 번호
+        assertThat(page.getTotalPages()).isEqualTo(4);  // 전체 페이지 수
+        assertThat(page.isFirst()).isFalse();   // 첫번째 페이지인가?
+        assertThat(page.hasNext()).isFalse();   // 다음 페이지가 있는가?
+
+//
+//        PageRequest pageRequest2 = PageRequest.of(2, pageSize, Sort.by(Direction.DESC, "username"));
+//        Page<Member> page2 = memberRepository.findByAge(age, pageRequest2);
+//        assertThat(page2.getContent().size()).isEqualTo(3);
+//        assertThat(page2.getTotalElements()).isEqualTo(11);
+//        assertThat(page2.getNumber()).isEqualTo(2);
+//        assertThat(page2.getTotalPages()).isEqualTo(4);
+//        assertThat(page2.isFirst()).isFalse();
+//        assertThat(page2.hasNext()).isTrue();
+    }
+
+    @Test
+    public void slicing() {
+        //given
+        int memberCount = 11;
+        for (int i = 1; i <= memberCount; i++) {
+            memberRepository.save(new Member("member" + i, 10));
+        }
+
+        int age = 10;
+        int pageNumber = 0;
+        int pageSize = 3;
+        PageRequest pageRequest = PageRequest.of(pageNumber, pageSize, Sort.by(Direction.DESC, "username"));
+
+        //when
+        // Slice는 limit+1개만큼 가져옴
+        // select m1_0.member_id,m1_0.age,m1_0.team_id,m1_0.username from member m1_0 where m1_0.age=10 order by m1_0.username desc limit 4;
+        Slice<Member> page = memberRepository.findSliceByAge(age, pageRequest);
+
+        //then
+        List<Member> content = page.getContent();
+//        long totalElements = page.getTotalElements();
+
+        assertThat(content.size()).isEqualTo(3);
+//        assertThat(page.getTotalElements()).isEqualTo(11);
+        assertThat(page.getNumber()).isEqualTo(0);
+//        assertThat(page.getTotalPages()).isEqualTo(4);
+        assertThat(page.isFirst()).isTrue();
+        assertThat(page.hasNext()).isTrue();
     }
 }
