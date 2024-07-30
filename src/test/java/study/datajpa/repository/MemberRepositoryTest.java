@@ -1,12 +1,15 @@
 package study.datajpa.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.transaction.annotation.Transactional;
 import study.datajpa.entity.Member;
 
@@ -103,5 +106,45 @@ class MemberRepositoryTest {
         List<Member> result = memberRepository.findUser("AAA", 10);
         Member findMember = result.get(0);
         assertThat(findMember).isEqualTo(member1);
+    }
+
+    @Test
+    public void findByNames() {
+        Member member1 = new Member("AAA", 10);
+        Member member2 = new Member("BBB", 30);
+        memberRepository.save(member1);
+        memberRepository.save(member2);
+
+        List<Member> result = memberRepository.findByNames(Arrays.asList("AAA", "BBB"));
+        for (Member member : result) {
+            System.out.println("member = " + member);
+        }
+    }
+
+    @Test
+    public void returnType() {
+        Member member1 = new Member("AAA", 10);
+        Member member2 = new Member("BBB", 30);
+        memberRepository.save(member1);
+        memberRepository.save(member2);
+
+        List<Member> aaa = memberRepository.findListByUsername("AAA");
+        Member findMember = memberRepository.findMemberByUsername("abcdef");
+        System.out.println("findMember = " + findMember);   // null
+        Optional<Member> findOptional = memberRepository.findOptionalByUsername("abcdef");
+        System.out.println("findOptional = " + findOptional);   // Optional.empty
+    }
+
+    @Test
+    public void returnType_duplicate() {
+        Member member1 = new Member("AAA", 10);
+        Member member2 = new Member("AAA", 30);
+        memberRepository.save(member1);
+        memberRepository.save(member2);
+
+        assertThatThrownBy(() -> {
+            // org.hibernate.NonUniqueResultException -> org.springframework.dao.IncorrectResultSizeDataAccessException 발생
+            Optional<Member> findOptional = memberRepository.findOptionalByUsername("AAA");
+        }).isInstanceOf(IncorrectResultSizeDataAccessException.class);
     }
 }

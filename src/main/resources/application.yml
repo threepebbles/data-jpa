@@ -1,6 +1,7 @@
 spring:
   datasource:
-    url: jdbc:h2:tcp://localhost/~/datajpa
+    # h2는 MODE를 통해 Oracle, MySQL, PostgreSQL과 호환 가능
+    url: jdbc:h2:tcp://localhost/~/datajpa;MODE=MySQL;
     username: sa
     password:
     driver-class-name: org.h2.Driver
@@ -11,6 +12,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
 logging:
   level:
     org.hibernate.SQL: debug
