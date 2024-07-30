@@ -3,6 +3,8 @@ package study.datajpa.repository;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -15,8 +17,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 import study.datajpa.entity.Member;
+import study.datajpa.entity.Team;
 
 @SpringBootTest
 @Transactional
@@ -24,6 +28,11 @@ import study.datajpa.entity.Member;
 class MemberRepositoryTest {
     @Autowired
     MemberRepository memberRepository;
+    @Autowired
+    TeamRepository teamRepository;
+
+    @PersistenceContext
+    EntityManager em;
 
     @Test
     public void testMember() {
@@ -220,5 +229,54 @@ class MemberRepositoryTest {
 //        assertThat(page.getTotalPages()).isEqualTo(4);
         assertThat(page.isFirst()).isTrue();
         assertThat(page.hasNext()).isTrue();
+    }
+
+    @Test
+    public void bulkUpdate() {
+        //given
+        for (int i = 1; i <= 5; i++) {
+            memberRepository.save(new Member("member" + i, 10 * i));
+        }
+
+        //when
+        // 20살 이상 -> 4명
+        // 벌크 연산 주의사항
+        // 벌크 연산(executeUpdate()) 실행 시에는 내부적으로 em.flush() 호출 후, 영속성 컨텍스트를 거치지 않고 DB로 바로 쿼리를 보낸다.
+        // 따라서 벌크 연산 후 영속성 컨텍스트에 남아있는 엔티티는 DB와 값이 다르다는 것을 인지하고 있어야 한다.
+        // 벌크 연산 후 em.clear()를 통해 캐시를 비워주는 것이 하나의 방법.
+        // Spring Data JPA의 @Modifying(clearAutomatically = true)를 사용하면 em.clear()와 같은 효과를 볼 수 있음.
+        int resultCount = memberRepository.bulkAgePlus(20);
+
+        List<Member> result = memberRepository.findByUsername("member5");
+        Member member5 = result.get(0);
+        System.out.println("member5 = " + member5); // clearAutomatically = true 했을 경우 51, 안했을 경우 50
+
+        //then
+        assertThat(resultCount).isEqualTo(4);
+    }
+
+    @Test
+    @Rollback(false)
+    public void findMemberLazy() {
+        //given
+        // member1 -> teamA
+        // member2 -> teamB
+        Team teamA = new Team("teamA");
+        Team teamB = new Team("teamB");
+        teamRepository.save(teamA);
+        teamRepository.save(teamB);
+
+        Member member1 = new Member("member1", 10, teamA);
+        Member member2 = new Member("member2", 10, teamB);
+        memberRepository.save(member1);
+        memberRepository.save(member2);
+
+        em.flush();
+        em.clear();
+
+        //when
+//        List<Member> members = memberRepository.findNamedEntityGraphByUsername("member1");
+        List<Member> members = memberRepository.findEntityGraphByUsername("member1");
+        //then
     }
 }

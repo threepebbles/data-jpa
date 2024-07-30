@@ -6,13 +6,17 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import study.datajpa.dto.MemberDto;
 import study.datajpa.entity.Member;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {
+    // 메소드 명에서 find와 by 사이에 어떤 단어가 들어가도 쿼리에 영향을 끼치지 않음. 마음대로 네이밍 가능.
+
     List<Member> findByUsernameAndAgeGreaterThan(String username, int age);
 
     List<Member> findTop3By();
@@ -46,4 +50,29 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     Page<Member> findByAge(int age, Pageable pageable);
 
     Slice<Member> findSliceByAge(int age, Pageable pageable);
+
+    // @Modifying: JPA의 executeUpdate(). 수정하는 쿼리에는 꼭 넣어줘야 하는 어노테이션. 없으면 에러 발생.
+    @Modifying(clearAutomatically = true)
+    @Query("update Member m set m.age = m.age + 1 where m.age >= :age")
+    int bulkAgePlus(@Param("age") int age);
+
+    @Query("select m from Member m left join fetch m.team")
+    List<Member> findMemberFetchJoin();
+
+    @Override
+    // @EntityGraph: team을 fetch join한 것과 같은 효과
+    @EntityGraph(attributePaths = {"team"})
+    List<Member> findAll();
+
+    @EntityGraph(attributePaths = {"team"})
+    @Query("select m from Member m")
+    List<Member> findMemberEntityGraph();
+
+    @EntityGraph("Member.all")
+    List<Member> findNamedEntityGraphByUsername(@Param("username") String username);
+
+    // 간단한 fetch join이 필요할 때는 EntityGraph를 사용
+    // 복잡한 쿼리는 JPQL로 직접 fetch join 쿼리 작성
+    @EntityGraph(attributePaths = {"team"})
+    List<Member> findEntityGraphByUsername(@Param("username") String username);
 }
