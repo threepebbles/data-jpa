@@ -7,6 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedQuery;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,7 +17,13 @@ import lombok.ToString;
 @Getter
 // JPA의 프록시 객체 기능 사용을 위해 protected까지는 접근제어를 열어놓아야 함
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@ToString(of = {"id", "username", "age"})   // 연관관계 필드는 toString에 추가 안하는게 좋음. 순환참조 발생 가능성 있음.
+// 연관관계 필드는 toString에 추가 안하는게 좋음. 순환참조 발생 가능성 있음.
+@ToString(of = {"id", "username", "age"})
+// NamedQuery는 엔티티 내에 너무 많은 기능과 책임을 부과하게 하기 때문에 실무에서 잘 사용하지 않는 방법임
+@NamedQuery(
+        name = "Member.findByUsername",
+        query = "select m from Member m where m.username = :username"
+)
 public class Member {
     @Id
     @GeneratedValue
