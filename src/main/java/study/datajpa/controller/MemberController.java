@@ -3,7 +3,6 @@ package study.datajpa.controller;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.web.PageableDefault;
@@ -40,7 +39,6 @@ public class MemberController {
             // local 설정. global 설정은 appliation.yml에서 가능
             @PageableDefault(page = 1, size = 5, sort = "username", direction = Direction.DESC) Pageable pageable) {
 
-        PageRequest request = PageRequest.of(1, 5);
         Page<Member> page = memberRepository.findAll(pageable);
 
         Page<MemberDto> toMap = page.map(member -> new MemberDto(member));
