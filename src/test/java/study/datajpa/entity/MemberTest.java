@@ -1,19 +1,15 @@
 package study.datajpa.entity;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-import jakarta.persistence.Entity;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 @Transactional
-@Rollback(false)
+//@Rollback(false)
 class MemberTest {
     @PersistenceContext
     EntityManager em;
@@ -39,7 +35,7 @@ class MemberTest {
 
         List<Member> members = em.createQuery("select m from Member m", Member.class)
                 .getResultList();
-        for(Member member: members) {
+        for (Member member : members) {
             System.out.println("member = " + member);
             System.out.println("-> member.team = " + member.getTeam()); // 지연 로딩
         }

@@ -18,7 +18,7 @@ import org.springframework.data.repository.query.Param;
 import study.datajpa.dto.MemberDto;
 import study.datajpa.entity.Member;
 
-public interface MemberRepository extends JpaRepository<Member, Long> {
+public interface MemberRepository extends JpaRepository<Member, Long>, MemberRepositoryCustom {
     // 메소드 명에서 find와 by 사이에 어떤 단어가 들어가도 쿼리에 영향을 끼치지 않음. 마음대로 네이밍 가능.
 
     List<Member> findByUsernameAndAgeGreaterThan(String username, int age);

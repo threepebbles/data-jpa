@@ -17,7 +17,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
-import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 import study.datajpa.entity.Member;
 import study.datajpa.entity.Team;
@@ -26,8 +25,10 @@ import study.datajpa.entity.Team;
 @Transactional
 //@Rollback(false)
 class MemberRepositoryTest {
+    // @Autowired는 기본적으로 타입(Type)으로 조회를 시도하고, 동일한 타입의 빈이 2개 이상 존재하면 필드 이름, 파라미터 이름으로 빈을 조회
     @Autowired
     MemberRepository memberRepository;
+
     @Autowired
     TeamRepository teamRepository;
 
@@ -251,7 +252,6 @@ class MemberRepositoryTest {
     }
 
     @Test
-    @Rollback(false)
     public void findMemberLazy() {
         //given
         // member1 -> teamA
@@ -302,5 +302,10 @@ class MemberRepositoryTest {
 
         //when
         List<Member> result = memberRepository.findLockByUsername("member1");
+    }
+
+    @Test
+    public void callCustom() {
+        List<Member> result = memberRepository.findMemberCustom();
     }
 }
