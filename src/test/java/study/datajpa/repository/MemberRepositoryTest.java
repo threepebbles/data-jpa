@@ -352,7 +352,36 @@ class MemberRepositoryTest {
 
         // then
         for (UsernameOnlyDto usernameOnlyDto : result) {
-            System.out.println("usernameOnly.getUsername = " + usernameOnlyDto.getUsername()); // m1
+            System.out.println("usernameOnlyDto.getUsername = " + usernameOnlyDto.getUsername()); // m1
+        }
+    }
+
+    @Test
+    public void nestedClosedProjections() {
+        //given
+        Team teamA = new Team("teamA");
+        em.persist(teamA);
+
+        Member m1 = new Member("m1", 0, teamA);
+        Member m2 = new Member("m2", 0, teamA);
+        em.persist(m1);
+        em.persist(m2);
+
+        em.flush();
+        em.clear();
+
+        // when
+        // 동적 프로젝션
+        List<NestedClosedProjections> result = memberRepository.findProjectionsDtoByUsername("m1",
+                NestedClosedProjections.class);
+
+        // then
+        for (NestedClosedProjections nestedClosedProjections : result) {
+            System.out.println(
+                    "nestedClosedProjections.getUsername() = " + nestedClosedProjections.getUsername()); // m1
+            System.out.println(
+                    "nestedClosedProjections.getTeam().getName() = " + nestedClosedProjections.getTeam()
+                            .getName()); // m1
         }
     }
 }
