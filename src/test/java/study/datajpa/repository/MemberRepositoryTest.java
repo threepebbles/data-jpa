@@ -347,7 +347,10 @@ class MemberRepositoryTest {
         em.clear();
 
         // when
-        List<UsernameOnlyDto> result = memberRepository.findProjectionsDtoByUsername("m1");
+        // 동적 프로젝션
+        List<UsernameOnlyDto> result = memberRepository.findProjectionsDtoByUsername("m1", UsernameOnlyDto.class);
+
+        // then
         for (UsernameOnlyDto usernameOnlyDto : result) {
             System.out.println("usernameOnly.getUsername = " + usernameOnlyDto.getUsername()); // m1
         }
